@@ -11,11 +11,11 @@ function get_localzone()
 end
 
 function _get_localzone_mac()
-    zone = readall(`systemsetup -gettimezone`)
+    zone = readall([`systemsetup -gettimezone`]...)
     if contains(zone, "Time Zone: ")
         zone = strip(replace(zone, "Time Zone: ", ""))
     else
-        zone = readlink("/etc/localtime")
+        zone = readlink(["/etc/localtime"]...)
         # link will be something like /usr/share/zoneinfo/America/Winnipeg
         zone = match(r"(?<=zoneinfo/).*$", zone).match
     end
@@ -45,15 +45,17 @@ function _get_localzone_unix()
     # that contain the timezone name.
 
     filename = "/etc/timezone"
-    if isfile(filename)
-        zone = ""
-        open(filename) do file
+    if isfile([filename]...)
+        file = open([filename]...)
+        try
             zone = readall(file)
             # Get rid of host definitions and comments:
             zone = strip(replace(zone, r"#.*", ""))
             zone = replace(zone, ' ', '_')
+            zone in validnames && return zone
+        finally
+            close(file)
         end
-        zone in validnames && return zone
     end
 
     # CentOS has a ZONE setting in /etc/sysconfig/clock,
@@ -62,8 +64,8 @@ function _get_localzone_unix()
 
     zone_re = r"(?:TIME)?ZONE\s*=\s*\"(.*?)\""
     for filename in ("/etc/sysconfig/clock", "/etc/conf.d/clock")
-        isfile(filename) || continue
-        file = open(filename)
+        isfile([filename]...) || continue
+        file = open([filename]...)
         try # Make sure we close the file
             for line in readlines(file)
                 matched = match(zone_re, line)
@@ -82,8 +84,8 @@ function _get_localzone_unix()
     # systemd distributions use symlinks that include the zone name,
     # see manpage of localtime(5) and timedatectl(1)
     link = "/etc/localtime"
-    if islink(link)
-        zone = readlink(link)
+    if islink([link]...)
+        zone = readlink([link]...)
         start = search(zone, '/')
 
         while start != 0
