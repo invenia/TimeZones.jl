@@ -14,6 +14,8 @@ export TimeZone, FixedTimeZone, VariableTimeZone, ZonedDateTime,
     firstdayofquarter, lastdayofquarter,
     # Re-export from Base.Dates
     yearmonthday, yearmonth, monthday, year, month, week, day, dayofmonth,
+    # conversion.jl
+    now,
     # local timezone
     localzone
 
