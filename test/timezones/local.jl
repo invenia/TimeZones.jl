@@ -1,5 +1,3 @@
-using Fixtures
-
 testnames = [
     "Africa/Abidjan",
     "America/Argentina/Buenos_Aires",
@@ -12,69 +10,68 @@ withenv("TZ" => nothing) do
     for testname in testnames
 
         # Determine timezone via systemsetup (Mac).
-        mock_readall = mock(return_value="Time Zone:  $testname\n")
-        patchers = [
-            Patcher(Base, :readall, mock_readall)
+        mock_readall(cmd) = "Time Zone:  $testname\n"
+        patches = [
+            Patch(Base, :readall, mock_readall)
         ]
-        patch(patchers) do
+        patch(patches) do
             @test TimeZones._get_localzone_mac() == testname
         end
 
         # Determine timezone from /etc/localtime (Mac).
-        mock_readall = mock(return_value="")
-        mock_readlink = mock(return_value="/usr/share/zoneinfo/$testname")
-        patchers = [
-            Patcher(Base, :readall, mock_readall)
-            Patcher(Base, :readlink, mock_readlink)
+        mock_readall(cmd) = ""
+        mock_readlink(filename) = "/usr/share/zoneinfo/$testname"
+        patches = [
+            Patch(Base, :readall, mock_readall)
+            Patch(Base, :readlink, mock_readlink)
         ]
-        patch(patchers) do
+        patch(patches) do
             @test TimeZones._get_localzone_mac() == testname
         end
 
         # Determine timezone from /etc/timezone
         mock_isfile(filename) = filename == "/etc/timezone"
-        fake_open(filename) = IOBuffer("$testname #Works with comments\n")
-        # mock_open = mock(return_value=IOBuffer("$testname #Works with comments\n"))
-        patchers = [
-            Patcher(Base, :isfile, mock_isfile)
-            Patcher(Base, :open, fake_open)
+        mock_open(filename) = IOBuffer("$testname #Works with comments\n")
+        patches = [
+            Patch(Base, :isfile, mock_isfile)
+            Patch(Base, :open, mock_open)
         ]
-        patch(patchers) do
+        patch(patches) do
             @test TimeZones._get_localzone_unix() == testname
         end
 
         # Determine timezone from /etc/conf.d/clock
-        mock_isfile2(filename) = filename == "/etc/conf.d/clock"
-        mock_open2 = mock(return_value=IOBuffer("\n\nTIMEZONE=\"$testname\""))
-        patchers = [
-            Patcher(Base, :isfile, mock_isfile2)
-            Patcher(Base, :open, mock_open2)
+        mock_isfile(filename) = filename == "/etc/conf.d/clock"
+        mock_open(filename) = IOBuffer("\n\nTIMEZONE=\"$testname\"")
+        patches = [
+            Patch(Base, :isfile, mock_isfile)
+            Patch(Base, :open, mock_open)
         ]
-        patch(patchers) do
+        patch(patches) do
             @test TimeZones._get_localzone_unix() == testname
         end
 
         # Determine timezone from /etc/localtime (Unix).
-        mock_isfile(filename) = filename == false
-        mock_islink = mock(return_value=true)
-        mock_readlink = mock(return_value="/usr/share/zoneinfo/$testname")
-        patchers = [
-            Patcher(Base, :isfile, mock_isfile)
-            Patcher(Base, :islink, mock_islink)
-            Patcher(Base, :readlink, mock_readlink)
+        mock_isfile(filename) = filename == "/etc/localtime"
+        mock_islink(filename) = filename == "/etc/localtime"
+        mock_readlink(filename) = "/usr/share/zoneinfo/$testname"
+        patches = [
+            Patch(Base, :isfile, mock_isfile)
+            Patch(Base, :islink, mock_islink)
+            Patch(Base, :readlink, mock_readlink)
         ]
-        patch(patchers) do
+        patch(patches) do
             @test TimeZones._get_localzone_unix() == testname
         end
 
         # Unable to determine timezone (Unix).
-        mock_isfile(filename) = filename == false
-        mock_islink = mock(return_value=false)
-        patchers = [
-            Patcher(Base, :isfile, mock_isfile)
-            Patcher(Base, :islink, mock_islink)
+        mock_isfile(filename) = false
+        mock_islink(filename) = false
+        patches = [
+            Patch(Base, :isfile, mock_isfile)
+            Patch(Base, :islink, mock_islink)
         ]
-        patch(patchers) do
+        patch(patches) do
             @test_throws ErrorException TimeZones._get_localzone_unix()
         end
 
