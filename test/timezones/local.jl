@@ -34,6 +34,7 @@ if OS_NAME == :Darwin
     end
 
 elseif OS_NAME == :Windows
+    # Test Windows
     mock_readall(args) = "Central Standard Time\r\n"
     patches = [
         Patch(Base, :readall, mock_readall)
@@ -41,11 +42,6 @@ elseif OS_NAME == :Windows
     patch(patches) do
         @test string(TimeZones.localzone()) == "America/Chicago"
     end
-
-    # TODO ""Pacific/Apia" was the timezone I was thinking could be an issue for the
-    # DST calculation. The entire day of 2011/12/30 was skipped when they changed from a
-    # -11:00 GMT offset to 13:00 GMT offset"
-
 else # Linux
     withenv("TZ" => nothing) do
         for testname in testnames
@@ -72,7 +68,6 @@ else # Linux
 #            patch(patches) do
 #                @test TimeZones.localzone().name == TimeZone(testname).name
 #            end
-
 
             # Determine timezone from /etc/localtime (Unix).
             mock_isfile(filename) = filename == "/etc/localtime" || contains(filename, PKG_DIR)
@@ -125,8 +120,8 @@ else # Linux
         transition = timezone.transitions[166]
         @test transition.utc_datetime == Dates.DateTime(2037, 03, 29, 1)
         @test string(transition.zone.name) == "CEST"
-        @test transition.zone.offset.dst == Dates.Second(3600)
         @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
     end
 
     # No explicit setting existed. Use localtime (Unix)
@@ -150,4 +145,101 @@ else # Linux
     #        @test transition.zone.offset.utc == Dates.Second(3600)
     #    end
     #end
+
+
+    # "Pacific/Apia" was the timezone I was thinking could be an issue for the
+    # DST calculation. The entire day of 2011/12/30 was skipped when they changed from a
+    # -11:00 GMT offset to 13:00 GMT offset
+    withenv("TZ" => joinpath(TZFILE_DIR, "Apia")) do
+        timezone = TimeZones.localzone()
+        @test string(timezone) == "local"
+        @test length(timezone.transitions) == 58
+
+        transition = timezone.transitions[4]
+        @test transition.utc_datetime == Dates.DateTime(2011, 04, 02, 14)
+        @test string(transition.zone.name) == "SST"
+        @test transition.zone.offset.utc == Dates.Second(-39600)
+        @test transition.zone.offset.dst == Dates.Second(0)
+
+        transition = timezone.transitions[5]
+        @test transition.utc_datetime == Dates.DateTime(2011, 09, 24, 14)
+        @test string(transition.zone.name) == "SDT"
+        @test transition.zone.offset.utc == Dates.Second(-39600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+
+        transition = timezone.transitions[6]
+        @test transition.utc_datetime == Dates.DateTime(2011, 12, 30, 10)
+        @test string(transition.zone.name) == "WSDT"
+        @test transition.zone.offset.utc == Dates.Second(46800)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+    end
+
+    # Because tzinfo files only store a single offset if both utc and dst change at the same
+    # time then the resulting utc and dst might not be quite right. Most notably during
+    # midsomer back in 1940's there were 2 different dst one after another, we get a
+    # different utc and dst than Olson.
+    withenv("TZ" => joinpath(TZFILE_DIR, "Paris")) do
+        timezone = TimeZones.localzone()
+        @test string(timezone) == "local"
+        @test length(timezone.transitions) == 183
+
+        transition = timezone.transitions[55]
+        @test transition.utc_datetime == Dates.DateTime(1944, 04, 03, 1)
+        @test string(transition.zone.name) == "CEST"
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+
+        transition = timezone.transitions[56]
+        @test transition.utc_datetime == Dates.DateTime(1944, 08, 24, 22)
+        @test string(transition.zone.name) == "WEMT"
+        # Olson shows it as 0,7200
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+
+        transition = timezone.transitions[57]
+        @test transition.utc_datetime == Dates.DateTime(1944, 10, 07, 23)
+        @test string(transition.zone.name) == "WEST"
+        @test transition.zone.offset.utc == Dates.Second(0)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+
+        transition = timezone.transitions[58]
+        @test transition.utc_datetime == Dates.DateTime(1945, 04, 02, 1)
+        @test string(transition.zone.name) == "WEMT"
+        # Olson shows it as 0,7200
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+    end
+
+    withenv("TZ" => joinpath(TZFILE_DIR, "Madrid")) do
+        timezone = TimeZones.localzone()
+        @test string(timezone) == "local"
+        @test length(timezone.transitions) == 163
+
+        transition = timezone.transitions[32]
+        @test transition.utc_datetime == Dates.DateTime(1946, 04, 13, 22)
+        @test string(transition.zone.name) == "WEMT"
+        # Olson shows it as 0,7200
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+
+        transition = timezone.transitions[33]
+        @test transition.utc_datetime == Dates.DateTime(1946, 09, 29, 22)
+        # Olson shows it as CEMT
+        @test string(transition.zone.name) == "CET"
+        # Olson shows it as 3600,7200
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(0)
+
+        transition = timezone.transitions[34]
+        @test transition.utc_datetime == Dates.DateTime(1949, 04, 30, 22)
+        @test string(transition.zone.name) == "CEST"
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(3600)
+
+        transition = timezone.transitions[35]
+        @test transition.utc_datetime == Dates.DateTime(1949, 09, 29, 23)
+        @test string(transition.zone.name) == "CET"
+        @test transition.zone.offset.utc == Dates.Second(3600)
+        @test transition.zone.offset.dst == Dates.Second(0)
+    end
 end
