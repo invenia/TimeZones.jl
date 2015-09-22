@@ -1,7 +1,7 @@
 using TimeZones
 using Base.Test
 
-import TimeZones: TZDATA_DIR
+import TimeZones: PKG_DIR, TZDATA_DIR
 import TimeZones.Olsen: ZoneDict, RuleDict, tzparse, resolve
 
 # For testing we'll reparse the tzdata every time to instead of using the serialized data.
