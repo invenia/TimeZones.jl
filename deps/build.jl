@@ -1,4 +1,4 @@
-import TimeZones: TZDATA_DIR, COMPILED_DIR
+import TimeZones: TZDATA_DIR, COMPILED_DIR, fixed_timezones
 import TimeZones.Olsen: REGIONS, compile
 
 @windows_only import TimeZones: TRANSLATION_FILE
@@ -44,6 +44,18 @@ for file in readdir(COMPILED_DIR)
     rm(joinpath(COMPILED_DIR, file), recursive=true)
 end
 compile(TZDATA_DIR, COMPILED_DIR)
+
+info("Adding additional FixedTimeZones")
+for (name, tz) in fixed_timezones()
+    parts = split(name, "/")
+    tz_dir, tz_file = joinpath(COMPILED_DIR, parts[1:end-1]...), parts[end]
+
+    isdir(tz_dir) || mkpath(tz_dir)
+
+    open(joinpath(tz_dir, tz_file), "w") do fp
+        serialize(fp, tz)
+    end
+end
 
 @windows_only begin
     translation_dir = dirname(TRANSLATION_FILE)
