@@ -89,3 +89,14 @@ withenv("TZ" => nothing) do
         end
     end
 end
+
+# Test Windows
+if OS_NAME == :Windows
+    mock_readall(args) = "Central Standard Time\r\n"
+    patches = [
+        Patch(Base, :readall, mock_readall)
+    ]
+    patch(patches) do
+        @test string(TimeZones._get_localzone_windows()) == "America/Chicago"
+    end
+end
