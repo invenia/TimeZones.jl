@@ -100,7 +100,7 @@ else # Linux
         end
 
         withenv("TZ" => "") do
-            @test_throws ErrorException TimeZones._get_localzone_unix()
+            @test_throws ErrorException TimeZones.localzone()
         end
     end
 
