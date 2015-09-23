@@ -13,11 +13,16 @@ export TimeZone, FixedTimeZone, VariableTimeZone, ZonedDateTime,
     firstdayofyear, lastdayofyear,
     firstdayofquarter, lastdayofquarter,
     # Re-export from Base.Dates
-    yearmonthday, yearmonth, monthday, year, month, week, day, dayofmonth
+    yearmonthday, yearmonth, monthday, year, month, week, day, dayofmonth,
+    # conversion.jl
+    now,
+    # local timezone
+    localzone
 
 const PKG_DIR = normpath(joinpath(dirname(@__FILE__), "..", "deps"))
 const TZDATA_DIR = joinpath(PKG_DIR, "tzdata")
 const COMPILED_DIR = joinpath(PKG_DIR, "compiled")
+@windows_only const TRANSLATION_FILE = joinpath(PKG_DIR, "windows_translation")
 
 include("timezones/time.jl")
 include("timezones/types.jl")
@@ -25,9 +30,12 @@ include("timezones/accessors.jl")
 include("timezones/arithmetic.jl")
 include("timezones/io.jl")
 include("timezones/adjusters.jl")
+include("timezones/conversions.jl")
+include("timezones/local.jl")
+include("timezones/fixed.jl")
 include("timezones/Olson.jl")
 
-function TimeZone(name::String)
+function TimeZone(name::AbstractString)
     tz_path = joinpath(COMPILED_DIR, split(name, "/")...)
 
     isfile(tz_path) || error("Unknown timezone $name")
@@ -38,8 +46,8 @@ function TimeZone(name::String)
 end
 
 function timezone_names()
-    names = String[]
-    check = Tuple{String,String}[(COMPILED_DIR, "")]
+    names = AbstractString[]
+    check = Tuple{AbstractString,AbstractString}[(COMPILED_DIR, "")]
 
     for (dir, partial) in check
         for filename in readdir(dir)
