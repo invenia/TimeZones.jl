@@ -1,6 +1,8 @@
-@windows_only using LightXML
-import TimeZones: TZDATA_DIR, COMPILED_DIR, WINDOWS_DIR
+import TimeZones: TZDATA_DIR, COMPILED_DIR
 import TimeZones.Olsen: REGIONS, compile
+
+@windows_only import TimeZones: TRANSLATION_FILE
+@windows_only using LightXML
 
 isdir(TZDATA_DIR) || mkdir(TZDATA_DIR)
 isdir(COMPILED_DIR) || mkdir(COMPILED_DIR)
@@ -44,7 +46,8 @@ end
 compile(TZDATA_DIR, COMPILED_DIR)
 
 @windows_only begin
-    isdir(WINDOWS_DIR) || mkdir(WINDOWS_DIR)
+    translation_dir = dirname(TRANSLATION_FILE)
+    isdir(translation_dir) || mkdir(translation_dir)
 
     # Windows is weird and uses its own timezone
     info("Downloading Windows to TZ name XML")
@@ -52,7 +55,7 @@ compile(TZDATA_DIR, COMPILED_DIR)
     # Generate the mapping between MS Windows timezone names and
     # tzdata/Olsen timezone names, by retrieving a file.
     xml_source = "http://unicode.org/cldr/data/common/supplemental/windowsZones.xml"
-    xml_file = joinpath(WINDOWS_DIR, "windowsZones.xml")
+    xml_file = joinpath(translation_dir, "windowsZones.xml")
     # Download the xml file from source
     download(xml_source, xml_file)
 
@@ -81,7 +84,7 @@ compile(TZDATA_DIR, COMPILED_DIR)
     end
 
     # Save the dictionary
-    open(joinpath(WINDOWS_DIR, "windowszones_compiled"), "w") do fp
+    open(TRANSLATION_FILE, "w") do fp
         serialize(fp, win_tz)
     end
 end

@@ -99,13 +99,11 @@ end
 end
 
 @windows_only function localzone()
-    win_tz_path = joinpath(WINDOWS_DIR, "windowszones_compiled")
-
-    isfile(win_tz_path) ||
+    isfile(TRANSLATION_FILE) ||
         error("Windows zones not found. Try running Pkg.build(\"TimeZones\")")
 
     win_tz_dict = nothing
-    open(win_tz_path, "r") do fp
+    open(TRANSLATION_FILE, "r") do fp
         win_tz_dict = deserialize(fp)
     end
 
