@@ -30,12 +30,12 @@ include("timezones/accessors.jl")
 include("timezones/arithmetic.jl")
 include("timezones/io.jl")
 include("timezones/adjusters.jl")
-include("timezones/Olsen.jl")
 include("timezones/conversions.jl")
 include("timezones/local.jl")
 include("timezones/fixed.jl")
+include("timezones/Olson.jl")
 
-function TimeZone(name::String)
+function TimeZone(name::AbstractString)
     tz_path = joinpath(COMPILED_DIR, split(name, "/")...)
 
     isfile(tz_path) || error("Unknown timezone $name")
@@ -46,8 +46,8 @@ function TimeZone(name::String)
 end
 
 function timezone_names()
-    names = String[]
-    check = Tuple{String,String}[(COMPILED_DIR, "")]
+    names = AbstractString[]
+    check = Tuple{AbstractString,AbstractString}[(COMPILED_DIR, "")]
 
     for (dir, partial) in check
         for filename in readdir(dir)

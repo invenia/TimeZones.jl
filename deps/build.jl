@@ -1,5 +1,5 @@
 import TimeZones: TZDATA_DIR, COMPILED_DIR, fixed_timezones
-import TimeZones.Olsen: REGIONS, compile
+import TimeZones.Olson: REGIONS, compile
 
 @windows_only import TimeZones: TRANSLATION_FILE
 @windows_only using LightXML
@@ -82,7 +82,7 @@ end
     mapZones = get_elements_by_tagname(mapTimezones, "mapZone")
 
     # Dictionary to store the windows to timezone conversions
-    win_tz = Dict{String,String}()
+    win_tz = Dict{AbstractString,AbstractString}()
 
     # Add conversions to the dictionary
     for mapzone in mapZones

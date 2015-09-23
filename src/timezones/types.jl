@@ -19,7 +19,7 @@ type NonExistentTimeError <: TimeError
 end
 Base.showerror(io::IO, e::NonExistentTimeError) = print(io, "DateTime $(e.dt) does not exist within $(string(e.tz))");
 
-# Note: The Olsen Database rounds offset precision to the nearest second
+# Note: The Olson Database rounds offset precision to the nearest second
 # See "America/New_York" notes for an example.
 immutable Offset
     utc::Second  # Standard offset from UTC
@@ -41,11 +41,11 @@ immutable FixedTimeZone <: TimeZone
     offset::Offset
 end
 
-function FixedTimeZone(name::String, utc_offset::Number, dst_offset::Number=0)
+function FixedTimeZone(name::AbstractString, utc_offset::Number, dst_offset::Number=0)
     FixedTimeZone(symbol(name), Offset(utc_offset, dst_offset))
 end
 
-function FixedTimeZone(s::String)
+function FixedTimeZone(s::AbstractString)
     m = match(r"^([+-]?\d{2})\:?(\d{2})(?:\:(\d{2}+))?$", s)
     m == nothing && error("Unrecognized timezone: $s")
 
@@ -87,7 +87,7 @@ immutable VariableTimeZone <: TimeZone
     transitions::Vector{Transition}
 end
 
-function VariableTimeZone(name::String, transitions::Vector{Transition})
+function VariableTimeZone(name::AbstractString, transitions::Vector{Transition})
     return VariableTimeZone(symbol(name), transitions)
 end
 

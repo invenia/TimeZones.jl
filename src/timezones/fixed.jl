@@ -1,5 +1,5 @@
 function fixed_timezones()
-    fixedzones = Dict{String, TimeZone}()
+    fixedzones = Dict{AbstractString, TimeZone}()
     # utc equivalent times
     utc = FixedTimeZone("UTC", 0)
     for zone in ("UTC", "Universal", "Zulu", "Etc/UTC", "Etc/Universal", "Etc/Zulu")

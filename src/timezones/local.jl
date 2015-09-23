@@ -124,7 +124,7 @@ type TTInfo
     tt_abbrind::UInt8
 end
 
-function build_tzinfo(zone::String, filename::String)
+function build_tzinfo(zone::AbstractString, filename::AbstractString)
     file = open([filename]...)
     try
         # Reference: http://man7.org/linux/man-pages/man5/tzfile.5.html
@@ -164,7 +164,7 @@ function build_tzinfo(zone::String, filename::String)
         end
         tznames_raw = Array{UInt8}(tzh_charcnt)
         namestart = 1
-        tznames = Dict{UInt8, String}()
+        tznames = Dict{UInt8, AbstractString}()
         for index in 1:tzh_charcnt
             tznames_raw[index] = bswap(read(file, UInt8))
             if tznames_raw[index] == '\0'

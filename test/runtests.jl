@@ -2,7 +2,7 @@ using TimeZones
 using Base.Test
 
 import TimeZones: PKG_DIR, TZDATA_DIR
-import TimeZones.Olsen: ZoneDict, RuleDict, tzparse, resolve
+import TimeZones.Olson: ZoneDict, RuleDict, tzparse, resolve
 
 # For testing we'll reparse the tzdata every time to instead of using the serialized data.
 # This should make the development/testing cycle simplier since you won't be forced to
@@ -10,7 +10,7 @@ import TimeZones.Olsen: ZoneDict, RuleDict, tzparse, resolve
 #
 # Note: resolving only the timezones we want is much faster than running compile which
 # recompiles all the timezones.
-tzdata = Dict{String,Tuple{ZoneDict,RuleDict}}()
+tzdata = Dict{AbstractString,Tuple{ZoneDict,RuleDict}}()
 for name in ("australasia", "europe", "northamerica")
     tzdata[name] = tzparse(joinpath(TZDATA_DIR, name))
 end
@@ -19,7 +19,7 @@ include("patch.jl")
 
 include("timezones/time.jl")
 include("timezones/types.jl")
-include("timezones/Olsen.jl")
+include("timezones/Olson.jl")
 include("timezones/accessors.jl")
 include("timezones/arithmetic.jl")
 include("timezones/io.jl")

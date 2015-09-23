@@ -23,7 +23,7 @@ t = Time(1,-23,-45)
 @test t == Time(0,36,15)
 @test toseconds(t) == 2175
 
-# Time String constructor
+# Time string constructor
 @test Time("1") == Time(1,0,0)  # See Pacific/Apia rules for an example.
 @test Time("1:23") == Time(1,23,0)
 @test Time("1:23:45") == Time(1,23,45)
