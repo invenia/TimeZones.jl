@@ -12,23 +12,29 @@ matrix:
       env: ARCH="i686"
 julia:
     - "0.4"
-    # - nightly
+    - nightly
 addons:
   apt_packages:
   - zlib1g:i386
 notifications:
     email: false
 script:
-    # - if [ `uname` = "Linux" ] && [ "$ARCH" = "i686" ]; then rm -rf ~/julia/*; curl -s -L --retry 7 'https://s3.amazonaws.com/julialang/bin/linux/x86/0.4/julia-0.4-latest-linux-i686.tar.gz' | tar -C ~/julia -x -z --strip-components=1 -f -; julia -e 'versioninfo()'; fi
-    - rm -rf ~/julia/*
-    - curl -s -L --retry 7 'https://s3.amazonaws.com/julialang/bin/linux/x86/0.4/julia-0.4-latest-linux-i686.tar.gz' | tar -C ~/julia -x -z --strip-components=1 -f -
-    - ls ~/julia/*
-    - chmod +x /home/travis/julia/bin/julia
-    - /home/travis/julia/bin/julia -e 'versioninfo()'
+    # Cannibalized from https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/script/julia.rb
+    - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$ARCH" = "i686" ]; then
+          STATUS="linux-i686";
+          OS_ARCH="linux/x86";
+          if [ "$TRAVIS_JULIA_VERSION" = "release" ]; then
+              URL="status.julialang.org/stable/$STATUS";
+          elif [ "$TRAVIS_JULIA_VERSION" = "nightly"]; then
+              URL="status.julialang.org/download/$STATUS";
+          else
+              URL="s3.amazonaws.com/julialang/bin/$OS_ARCH/$TRAVIS_JULIA_VERSION/julia-$TRAVIS_JULIA_VERSION-latest-$STATUS.tar.gz";
+          fi;
+          curl -s -L --retry 7 "https://$URL" | tar -C ~/julia -x -z --strip-components=1 -f -;
+          julia -e 'versioninfo()';
+      fi
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
     - julia -e 'Pkg.clone(pwd()); Pkg.build("TimeZones"); Pkg.test("TimeZones"; coverage=true)';
 after_success:
     - julia -e 'cd(Pkg.dir("TimeZones")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
     - julia -e 'cd(Pkg.dir("TimeZones")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-
-# https://status.julialang.org/download/linux-i686
